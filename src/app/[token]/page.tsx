@@ -185,9 +185,9 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
   }
 
   const outletsWithIssues = outlets.filter(o => o.offStock.length > 0 || o.inactiveMenu.length > 0)
-  const outletsAllGood = outlets.filter(o => o.items.length > 0 && o.offStock.length === 0 && o.inactiveMenu.length === 0)
-  const outletsNoData = outlets.filter(o => o.items.length === 0)
-  const totalItems = outlets.reduce((sum, o) => sum + o.items.length, 0)
+  const outletsAllGood = outlets.filter(o => o.snapshot !== null && o.offStock.length === 0 && o.inactiveMenu.length === 0)
+  const outletsNoData = outlets.filter(o => o.snapshot === null)
+  const totalItems = outlets.filter(o => o.snapshot !== null).length * 28
   const totalOff = outlets.reduce((sum, o) => sum + o.offStock.length, 0)
   const totalInactive = outlets.reduce((sum, o) => sum + o.inactiveMenu.length, 0)
 
