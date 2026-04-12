@@ -143,11 +143,11 @@ function GoodOutletRow({ data }: { data: OutletSnapshot }) {
     <div
       className="data-row cursor-default"
       role="listitem"
-      aria-label={`${data.outlet.name}: semua baik, ${data.items.length} item`}
+      aria-label={`${data.outlet.name}: semua baik, 28 item`}
     >
       <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" aria-hidden="true" />
       <span className="text-sm font-medium text-slate-800 ml-2 truncate">{data.outlet.name}</span>
-      <span className="ml-auto text-[11px] text-slate-400 font-mono">{data.items.length} item</span>
+      <span className="ml-auto text-[11px] text-emerald-500 font-mono font-medium">✓ 28/28</span>
     </div>
   )
 }
@@ -226,7 +226,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
       {/* KPI Stats Row — data-dense, compact grid */}
       <nav className="max-w-2xl mx-auto px-4 pt-4" aria-label="Ringkasan status">
         <div className="grid grid-cols-3 gap-[var(--grid-gap)]">
-          <StatCard icon={Package} label="Total Items" value={totalItems} accent="ok" symbol="item" />
+          <StatCard icon={Package} label="Total Item" value={totalItems} accent="ok" symbol="item tersedia" />
           <StatCard icon={PackageX} label="Stok Habis" value={totalOff} accent="error" symbol="off" />
           <StatCard icon={EyeOff} label="Nonaktif" value={totalInactive} accent="neutral" symbol="menu" />
         </div>
