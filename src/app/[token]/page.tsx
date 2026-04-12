@@ -2,8 +2,8 @@ import { getLatestSnapshots } from '@/lib/data'
 import { OutletSnapshot } from '@/lib/types'
 import {
   Package, PackageX, EyeOff, Store, Calendar,
-  TrendingUp, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp,
-  Shield, AlignLeft
+  TrendingUp, AlertTriangle, CheckCircle2, ShieldCheck,
+  Info
 } from 'lucide-react'
 
 function formatDate(dateStr: string): string {
@@ -12,146 +12,149 @@ function formatDate(dateStr: string): string {
   return date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-function StatCard({ icon: Icon, label, value, accent }: { icon: React.ElementType, label: string, value: number, accent: 'ok' | 'error' | 'neutral' }) {
-  const accentMap = {
-    ok: { icon: 'text-emerald-400', bg: 'glass-ok', border: 'border-emerald-500/20' },
-    error: { icon: 'text-red-400', bg: 'glass-error', border: 'border-red-500/20' },
-    neutral: { icon: 'text-white/50', bg: 'glass-neutral', border: 'border-white/10' },
+/* ==================================================================
+   STAT CARD — KPI display, data-dense, mono numbers
+   ================================================================== */
+function StatCard({ icon: Icon, label, value, accent, symbol }: {
+  icon: React.ElementType, label: string, value: number, accent: 'ok' | 'error' | 'neutral', symbol: string
+}) {
+  const styles = {
+    ok: { bg: 'card-ok', iconColor: 'text-emerald-600', valueColor: 'text-emerald-700' },
+    error: { bg: 'card-error', iconColor: 'text-red-600', valueColor: 'text-red-700' },
+    neutral: { bg: 'card card', iconColor: 'text-slate-500', valueColor: 'text-slate-700' },
   }
-  const style = accentMap[accent]
+  const s = styles[accent]
 
   return (
-    <div className={`${style.bg} p-4 flex flex-col gap-1.5 transition-all duration-200 hover:scale-[1.02]`}>
-      <div className="flex items-center gap-2">
-        <Icon className={`w-4 h-4 ${style.icon}`} />
-        <span className="text-[11px] font-medium tracking-wide uppercase text-white/50">{label}</span>
+    <div className={`${s.bg} flex flex-col justify-between`} role="status" aria-label={`${label}: ${value}`}>
+      <div className="flex items-center gap-1.5 mb-1">
+        <Icon className={`w-3.5 h-3.5 ${s.iconColor}`} aria-hidden="true" />
+        <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{label}</span>
       </div>
-      <div className="text-3xl font-bold tabular-nums tracking-tight text-white">{value}</div>
+      <div className="flex items-baseline gap-1">
+        <span className={`stat-value ${s.valueColor}`}>{value}</span>
+        <span className="text-[10px] text-slate-400 uppercase">{symbol}</span>
+      </div>
     </div>
   )
 }
 
-function OutletCard({ data, index }: { data: OutletSnapshot, index: number }) {
+/* ==================================================================
+   OUTLET CARD — Data-dense, expandable, WCAG AAA
+   ================================================================== */
+function OutletCard({ data }: { data: OutletSnapshot }) {
   const hasIssues = data.offStock.length > 0 || data.inactiveMenu.length > 0
   const totalIssues = data.offStock.length + data.inactiveMenu.length
 
   return (
-    <div
-      className={`animate-float-up overflow-hidden transition-all duration-300 hover:scale-[1.005] ${
-        hasIssues ? 'glass-error' : 'glass-ok'
-      }`}
-      style={{ animationDelay: `${index * 60}ms` }}
+    <article
+      className={`card ${hasIssues ? 'border-l-[3px] border-l-red-500' : 'border-l-[3px] border-l-emerald-500'}`}
+      role="region"
+      aria-label={`Outlet ${data.outlet.name}`}
     >
-      {/* Card Header */}
-      <div className={`px-5 py-3.5 flex items-center justify-between border-b ${
-        hasIssues ? 'border-red-500/15' : 'border-emerald-500/15'
-      }`}>
-        <div className="flex items-center gap-3">
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-            hasIssues
-              ? 'bg-red-500/15'
-              : 'bg-emerald-500/15'
-          }`}>
-            <Store className={`w-[18px] h-[18px] ${hasIssues ? 'text-red-400' : 'text-emerald-400'}`} />
-          </div>
+      {/* Header row — data dense */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Store className="w-4 h-4 text-slate-500 shrink-0" aria-hidden="true" />
           <div>
-            <h3 className="font-semibold text-[15px] text-white/95 leading-tight">{data.outlet.name}</h3>
-            <p className="text-xs text-white/40 mt-0.5">{data.items.length} menu items</p>
+            <h3 className="text-sm font-semibold text-slate-900 leading-tight">{data.outlet.name}</h3>
+            <p className="text-[11px] text-slate-500">{data.items.length} menu</p>
           </div>
         </div>
-        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
-          hasIssues ? 'badge-error' : 'badge-ok'
-        }`}>
-          {hasIssues ? (
-            <>
-              <AlertTriangle className="w-3.5 h-3.5" />
-              {totalIssues} issue{totalIssues > 1 ? 's' : ''}
-            </>
-          ) : (
-            <>
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              All Good
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Card Body */}
-      <div className="px-5 py-4">
-        {data.items.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-3 opacity-50">
-            <TrendingUp className="w-6 h-6 text-white/30" />
-            <p className="text-sm text-white/40">Menunggu data snapshot</p>
-          </div>
+        {hasIssues ? (
+          <span className="badge-error" aria-label={`${totalIssues} masalah`}>
+            <AlertTriangle className="w-3 h-3" aria-hidden="true" />
+            {totalIssues}
+          </span>
         ) : (
-          <div className="space-y-3">
-            {/* Out of Stock */}
-            {data.offStock.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <PackageX className="w-4 h-4 text-red-400" />
-                  <span className="text-xs font-semibold text-red-400 uppercase tracking-wider">Stok Habis</span>
-                  <span className="ml-auto text-xs text-red-400/70 font-mono">{data.offStock.length}</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {data.offStock.map((item) => (
-                    <span key={item.id} className="tag-error inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium">
-                      {item.item_name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Inactive Menu */}
-            {data.inactiveMenu.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <EyeOff className="w-4 h-4 text-white/40" />
-                  <span className="text-xs font-semibold text-white/50 uppercase tracking-wider">Menu Nonaktif</span>
-                  <span className="ml-auto text-xs text-white/30 font-mono">{data.inactiveMenu.length}</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {data.inactiveMenu.map((item) => (
-                    <span key={item.id} className="tag-neutral inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium">
-                      {item.item_name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* All Good */}
-            {data.offStock.length === 0 && data.inactiveMenu.length === 0 && (
-              <div className="flex items-center justify-center gap-2 py-2">
-                <Shield className="w-5 h-5 text-emerald-400" />
-                <span className="text-sm font-medium text-emerald-400">Semua item tersedia</span>
-              </div>
-            )}
-          </div>
+          <span className="badge-ok" aria-label="Semua baik">
+            <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
+            OK
+          </span>
         )}
       </div>
-    </div>
+
+      {/* Data section */}
+      {data.items.length === 0 ? (
+        <div className="flex items-center gap-2 py-2 text-slate-400">
+          <TrendingUp className="w-4 h-4" aria-hidden="true" />
+          <p className="text-xs">Menunggu data snapshot</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {/* Stock status row */}
+          {data.offStock.length > 0 && (
+            <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <PackageX className="w-3.5 h-3.5 text-red-500" aria-hidden="true" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-red-600">
+                  Stok Habis
+                </span>
+                <span className="ml-auto text-[11px] font-mono text-red-400">{data.offStock.length}</span>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {data.offStock.map((item) => (
+                  <span key={item.id} className="tag-error">
+                    {item.item_name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Inactive menu row */}
+          {data.inactiveMenu.length > 0 && (
+            <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <EyeOff className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  Menu Nonaktif
+                </span>
+                <span className="ml-auto text-[11px] font-mono text-slate-400">{data.inactiveMenu.length}</span>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {data.inactiveMenu.map((item) => (
+                  <span key={item.id} className="tag-neutral">
+                    {item.item_name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* All good */}
+          {data.offStock.length === 0 && data.inactiveMenu.length === 0 && (
+            <div className="flex items-center gap-1.5 py-0.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-500" aria-hidden="true" />
+              <span className="text-xs font-medium text-emerald-600">Semua item tersedia</span>
+            </div>
+          )}
+        </div>
+      )}
+    </article>
   )
 }
 
-function GoodOutletBadge({ data, index }: { data: OutletSnapshot, index: number }) {
+/* ==================================================================
+   COMPACT GOOD OUTLET — inline row
+   ================================================================== */
+function GoodOutletRow({ data }: { data: OutletSnapshot }) {
   return (
     <div
-      className="glass-neutral glass-hover flex items-center gap-3 px-4 py-3 animate-float-up cursor-pointer"
-      style={{ animationDelay: `${index * 60}ms` }}
+      className="data-row cursor-default"
+      role="listitem"
+      aria-label={`${data.outlet.name}: semua baik, ${data.items.length} item`}
     >
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-500/12">
-        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-white/90 truncate">{data.outlet.name}</p>
-        <p className="text-xs text-white/40">{data.items.length} items</p>
-      </div>
+      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" aria-hidden="true" />
+      <span className="text-sm font-medium text-slate-800 ml-2 truncate">{data.outlet.name}</span>
+      <span className="ml-auto text-[11px] text-slate-400 font-mono">{data.items.length} item</span>
     </div>
   )
 }
 
+/* ==================================================================
+   MAIN DASHBOARD PAGE
+   ================================================================== */
 export default async function DashboardPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
 
@@ -169,13 +172,13 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
 
   if (error) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center p-4">
-        <div className="glass p-8 text-center max-w-sm animate-float-up">
-          <div className="w-16 h-16 rounded-2xl bg-red-500/15 flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle className="w-8 h-8 text-red-400" />
+      <div className="min-h-[100dvh] flex items-center justify-center p-4 bg-[var(--bg-page)]" role="alert">
+        <div className="card text-center max-w-sm animate-in">
+          <div className="w-14 h-14 rounded-lg bg-red-50 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-7 h-7 text-red-500" aria-hidden="true" />
           </div>
-          <h1 className="text-xl font-semibold text-white mb-2">Akses Ditolak</h1>
-          <p className="text-sm text-white/50">{error || 'Link tidak valid'}</p>
+          <h1 className="text-lg font-semibold text-slate-900 mb-1">Akses Ditolak</h1>
+          <p className="text-sm text-slate-500">{error || 'Link tidak valid'}</p>
         </div>
       </div>
     )
@@ -189,96 +192,111 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
   const totalInactive = outlets.reduce((sum, o) => sum + o.inactiveMenu.length, 0)
 
   return (
-    <div className="min-h-[100dvh]">
+    <div className="min-h-[100dvh] bg-[var(--bg-page)]">
+      {/* Skip Link (WCAG) */}
+      <a href="#main-content" className="skip-link">Langsung ke konten utama</a>
+
       {/* Header */}
-      <header className="glass-header sticky top-0 z-10">
-        <div className="max-w-lg mx-auto px-4 py-3.5">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/10 overflow-hidden shrink-0">
-              <img
-                src="https://ayamgulingenakko.com/images/095c0779e56422e1839838ffbe2abe86.png"
-                alt="Enakko"
-                className="w-9 h-9 object-contain"
-              />
-            </div>
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-10" role="banner">
+        <div className="max-w-2xl mx-auto px-4" style={{ height: 'var(--header-height)' }}>
+          <div className="flex items-center gap-3 h-full">
+            <img
+              src="https://ayamgulingenakko.com/images/095c0779e56422e1839838ffbe2abe86.png"
+              alt="Logo Enakko"
+              className="w-9 h-9 object-contain shrink-0"
+            />
             <div className="min-w-0">
-              <h1 className="text-[17px] font-bold text-white leading-tight">Enakko Stock Monitor</h1>
-              <p className="text-xs text-white/45 mt-0.5">Ayam Guling Enakko Bali</p>
+              <h1 className="text-[var(--font-size-lg)] font-bold text-slate-900 leading-tight">Enakko Stock Monitor</h1>
+              <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                <Calendar className="w-3 h-3" aria-hidden="true" />
+                <time>{formatDate(date)}</time>
+                <span className="text-slate-300" aria-hidden="true">·</span>
+                <Store className="w-3 h-3" aria-hidden="true" />
+                <span>{outlets.length} gerai</span>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-3 mt-3 text-xs text-white/40">
-            <span className="flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5" />
-              {formatDate(date)}
-            </span>
-            <span className="text-white/15">·</span>
-            <span className="flex items-center gap-1.5">
-              <Store className="w-3.5 h-3.5" />
-              {outlets.length} gerai
-            </span>
+            <div className="ml-auto flex items-center gap-1.5 text-[11px] text-slate-400" aria-label="Ayam Guling Enakko Bali">
+              <Info className="w-3.5 h-3.5" aria-hidden="true" />
+              <span className="hidden sm:inline">Enakko Bali</span>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Stats */}
-      <div className="max-w-lg mx-auto px-4 pt-5">
-        <div className="grid grid-cols-3 gap-2.5">
-          <StatCard icon={Package} label="Total Items" value={totalItems} accent="ok" />
-          <StatCard icon={PackageX} label="Stok Habis" value={totalOff} accent="error" />
-          <StatCard icon={EyeOff} label="Nonaktif" value={totalInactive} accent="neutral" />
+      {/* KPI Stats Row — data-dense, compact grid */}
+      <nav className="max-w-2xl mx-auto px-4 pt-4" aria-label="Ringkasan status">
+        <div className="grid grid-cols-3 gap-[var(--grid-gap)]">
+          <StatCard icon={Package} label="Total Items" value={totalItems} accent="ok" symbol="item" />
+          <StatCard icon={PackageX} label="Stok Habis" value={totalOff} accent="error" symbol="off" />
+          <StatCard icon={EyeOff} label="Nonaktif" value={totalInactive} accent="neutral" symbol="menu" />
         </div>
-      </div>
+      </nav>
 
-      {/* Issues Section */}
-      <main className="max-w-lg mx-auto px-4 py-5 space-y-5">
+      {/* Main Content */}
+      <main id="main-content" className="max-w-2xl mx-auto px-4 pt-4 pb-8 space-y-5" role="main">
+        {/* Issues */}
         {outletsWithIssues.length > 0 && (
-          <section>
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-6 h-6 rounded-lg bg-red-500/15 flex items-center justify-center">
-                <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
+          <section aria-label="Outlet dengan masalah">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-5 h-5 rounded bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="w-3.5 h-3.5 text-red-600" aria-hidden="true" />
               </div>
-              <h2 className="text-sm font-semibold text-red-400">Perlu Perhatian <span className="text-white/30 font-normal">({outletsWithIssues.length})</span></h2>
+              <h2 className="text-sm font-semibold text-slate-900">
+                Perlu Perhatian
+              </h2>
+              <span className="text-[11px] font-mono text-slate-400 ml-1">
+                {outletsWithIssues.length}/{outlets.length}
+              </span>
             </div>
-            <div className="space-y-3 stagger">
-              {outletsWithIssues.map((o, i) => (
-                <OutletCard key={o.outlet.id} data={o} index={i} />
+            <div className="space-y-2 stagger" role="list">
+              {outletsWithIssues.map((o) => (
+                <OutletCard key={o.outlet.id} data={o} />
               ))}
             </div>
           </section>
         )}
 
+        {/* All Good */}
         {outletsAllGood.length > 0 && (
-          <section>
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-6 h-6 rounded-lg bg-emerald-500/15 flex items-center justify-center">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+          <section aria-label="Outlet tanpa masalah">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-5 h-5 rounded bg-emerald-100 flex items-center justify-center">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
               </div>
-              <h2 className="text-sm font-semibold text-emerald-400">Semua Baik <span className="text-white/30 font-normal">({outletsAllGood.length})</span></h2>
+              <h2 className="text-sm font-semibold text-slate-900">
+                Semua Baik
+              </h2>
+              <span className="text-[11px] font-mono text-slate-400 ml-1">
+                {outletsAllGood.length}/{outlets.length}
+              </span>
             </div>
-            <div className="space-y-2 stagger">
-              {outletsAllGood.map((o, i) => (
-                <GoodOutletBadge key={o.outlet.id} data={o} index={i} />
+            <div className="card overflow-hidden" role="list">
+              {outletsAllGood.map((o) => (
+                <GoodOutletRow key={o.outlet.id} data={o} />
               ))}
             </div>
           </section>
         )}
 
+        {/* No Data */}
         {outletsNoData.length > 0 && (
-          <section>
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center">
-                <TrendingUp className="w-3.5 h-3.5 text-white/40" />
+          <section aria-label="Outlet menunggu data">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-5 h-5 rounded bg-slate-100 flex items-center justify-center">
+                <TrendingUp className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
               </div>
-              <h2 className="text-sm font-semibold text-white/50">Menunggu Data <span className="text-white/25 font-normal">({outletsNoData.length})</span></h2>
+              <h2 className="text-sm font-semibold text-slate-500">
+                Menunggu Data
+              </h2>
+              <span className="text-[11px] font-mono text-slate-300 ml-1">
+                {outletsNoData.length}/{outlets.length}
+              </span>
             </div>
-            <div className="space-y-2 stagger">
-              {outletsNoData.map((o, i) => (
-                <div key={o.outlet.id}
-                  className="glass-neutral flex items-center gap-3 px-4 py-3 opacity-50 animate-float-up"
-                  style={{ animationDelay: `${i * 60}ms` }}
-                >
-                  <Store className="w-4 h-4 text-white/30" />
-                  <p className="text-sm text-white/40">{o.outlet.name}</p>
+            <div className="card overflow-hidden opacity-60">
+              {outletsNoData.map((o) => (
+                <div key={o.outlet.id} className="data-row" role="listitem" aria-label={o.outlet.name}>
+                  <Store className="w-4 h-4 text-slate-300" aria-hidden="true" />
+                  <span className="text-sm text-slate-400 ml-2">{o.outlet.name}</span>
                 </div>
               ))}
             </div>
@@ -287,8 +305,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
       </main>
 
       {/* Footer */}
-      <footer className="max-w-lg mx-auto px-4 py-8 text-center">
-        <p className="text-xs text-white/25">
+      <footer className="max-w-2xl mx-auto px-4 pb-6 text-center" role="contentinfo">
+        <p className="text-[11px] text-slate-400">
           Auto-updated daily at 15:00 WITA &middot; Powered by Hermes
         </p>
       </footer>
