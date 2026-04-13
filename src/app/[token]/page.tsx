@@ -237,6 +237,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
   const totalItems = outlets.filter(o => o.snapshot !== null).length * TOTAL_MENU_ITEMS
   const totalOff = outlets.reduce((sum, o) => sum + o.offStock.length, 0)
   const totalInactive = outlets.reduce((sum, o) => sum + o.inactiveMenu.length, 0)
+  const gofoodOutletsCount = outlets.filter(o => getPlatform(o.outlet.name) === 'GoFood').length
+  const grabOutletsCount = outlets.filter(o => getPlatform(o.outlet.name) === 'GrabFood').length
 
   return (
     <div className="min-h-[100dvh] bg-[var(--bg-page)]">
@@ -244,9 +246,13 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
       <a href="#main-content" className="skip-link">Langsung ke konten utama</a>
 
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10" role="banner">
-        <div className="max-w-2xl mx-auto px-4" style={{ height: 'var(--header-height)' }}>
-          <div className="flex items-center gap-3 h-full">
+      <header
+        className="bg-white border-b border-slate-200 sticky top-0 z-10"
+        role="banner"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
+        <div className="max-w-2xl mx-auto px-4" style={{ minHeight: 'var(--header-height)' }}>
+          <div className="flex items-center gap-3 h-full py-2">
             <img
               src="https://ayamgulingenakko.com/images/095c0779e56422e1839838ffbe2abe86.png"
               alt="Logo Enakko"
@@ -267,8 +273,13 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
                 <time>{formatDate(date)}</time>
                 <span className="text-slate-300" aria-hidden="true">·</span>
                 <Store className="w-3 h-3" aria-hidden="true" />
-                <span>{outlets.length} gerai</span>
+                <span>{gofoodOutletsCount} gerai</span>
               </div>
+              {grabOutletsCount > 0 && (
+                <p className="mt-0.5 text-[10px] font-medium text-amber-600">
+                  GrabFood {grabOutletsCount} gerai &middot; beta test
+                </p>
+              )}
             </div>
             <div className="ml-auto flex items-center gap-1.5 text-[11px] text-slate-400" aria-label="Ayam Guling Enakko Bali">
               <Info className="w-3.5 h-3.5" aria-hidden="true" />
@@ -368,9 +379,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
 
       {/* Footer */}
       <footer className="max-w-2xl mx-auto px-4 pb-6 text-center" role="contentinfo">
-        <p className="text-[11px] text-slate-400">
-          Auto-updated daily at 15:00 WITA &middot; Powered by Hermes
-        </p>
+        <p className="text-[11px] text-slate-400">Auto Generated</p>
       </footer>
     </div>
   )
