@@ -7,6 +7,8 @@ import {
 } from 'lucide-react'
 
 const TOTAL_MENU_ITEMS = 28
+const GOFOOD_LOGO_URL = 'https://i.gojekapi.com/darkroom/gofood-id/v2/images/uploads/f9546f29-23c3-4384-adf9-03bb59a89136_gofood-logo.png?auto=format'
+const GRABFOOD_LOGO_URL = 'https://food.grab.com/static/images/logo-grabfood-white2.svg'
 
 type Platform = 'GoFood' | 'GrabFood'
 
@@ -26,11 +28,11 @@ function cleanOutletName(outletName: string): string {
 
 function PlatformBadge({ platform }: { platform: Platform }) {
   const isGrab = platform === 'GrabFood'
-  const logoSrc = isGrab ? '/grabfood-logo.svg' : '/gofood-logo.svg'
+  const logoSrc = isGrab ? GRABFOOD_LOGO_URL : GOFOOD_LOGO_URL
 
   return (
-    <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 ${isGrab ? 'border-emerald-200 bg-emerald-50' : 'border-sky-200 bg-sky-50'}`}>
-      <img src={logoSrc} alt={`${platform} logo`} className="h-3.5 w-auto" />
+    <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 ${isGrab ? 'border-emerald-600 bg-emerald-500' : 'border-rose-200 bg-rose-50'}`}>
+      <img src={logoSrc} alt={`${platform} logo`} className={`${isGrab ? 'h-3 w-auto' : 'h-3.5 w-auto'}`} />
     </span>
   )
 }
@@ -253,8 +255,12 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
             <div className="min-w-0">
               <h1 className="text-[var(--font-size-lg)] font-bold text-slate-900 leading-tight">Enakko Stock Monitor</h1>
               <div className="mt-1 flex items-center gap-1.5" aria-label="Platform monitor: GoFood dan GrabFood">
-                <img src="/gofood-logo.svg" alt="GoFood" className="h-4 w-auto" />
-                <img src="/grabfood-logo.svg" alt="GrabFood" className="h-4 w-auto" />
+                <span className="inline-flex items-center rounded-md border border-rose-200 bg-rose-50 px-1.5 py-0.5">
+                  <img src={GOFOOD_LOGO_URL} alt="GoFood" className="h-4 w-auto" />
+                </span>
+                <span className="inline-flex items-center rounded-md border border-emerald-600 bg-emerald-500 px-1.5 py-0.5">
+                  <img src={GRABFOOD_LOGO_URL} alt="GrabFood" className="h-3.5 w-auto" />
+                </span>
               </div>
               <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-500">
                 <Calendar className="w-3 h-3" aria-hidden="true" />
