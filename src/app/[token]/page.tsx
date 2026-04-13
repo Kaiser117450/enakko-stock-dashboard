@@ -6,10 +6,33 @@ import {
   Info
 } from 'lucide-react'
 
+const TOTAL_MENU_ITEMS = 28
+
+type Platform = 'GoFood' | 'GrabFood'
+
 function formatDate(dateStr: string): string {
   if (dateStr === 'No data yet') return 'Belum ada data'
   const date = new Date(dateStr + 'T00:00:00')
   return date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function getPlatform(outletName: string): Platform {
+  return outletName.startsWith('GrabFood - ') ? 'GrabFood' : 'GoFood'
+}
+
+function cleanOutletName(outletName: string): string {
+  return outletName.startsWith('GrabFood - ') ? outletName.replace('GrabFood - ', '') : outletName
+}
+
+function PlatformBadge({ platform }: { platform: Platform }) {
+  const isGrab = platform === 'GrabFood'
+  const logoSrc = isGrab ? '/grabfood-logo.svg' : '/gofood-logo.svg'
+
+  return (
+    <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 ${isGrab ? 'border-emerald-200 bg-emerald-50' : 'border-sky-200 bg-sky-50'}`}>
+      <img src={logoSrc} alt={`${platform} logo`} className="h-3.5 w-auto" />
+    </span>
+  )
 }
 
 /* ==================================================================
@@ -45,6 +68,8 @@ function StatCard({ icon: Icon, label, value, accent, symbol }: {
 function OutletCard({ data }: { data: OutletSnapshot }) {
   const hasIssues = data.offStock.length > 0 || data.inactiveMenu.length > 0
   const totalIssues = data.offStock.length + data.inactiveMenu.length
+  const platform = getPlatform(data.outlet.name)
+  const displayName = cleanOutletName(data.outlet.name)
 
   return (
     <article
@@ -57,8 +82,11 @@ function OutletCard({ data }: { data: OutletSnapshot }) {
         <div className="flex items-center gap-2">
           <Store className="w-4 h-4 text-slate-500 shrink-0" aria-hidden="true" />
           <div>
-            <h3 className="text-sm font-semibold text-slate-900 leading-tight">{data.outlet.name}</h3>
-            <p className="text-[11px] text-slate-500">{data.items.length} menu</p>
+            <h3 className="text-sm font-semibold text-slate-900 leading-tight">{displayName}</h3>
+            <div className="mt-0.5 flex items-center gap-1.5">
+              <PlatformBadge platform={platform} />
+              <p className="text-[11px] text-slate-500">{TOTAL_MENU_ITEMS} menu</p>
+            </div>
           </div>
         </div>
         {hasIssues ? (
@@ -139,15 +167,21 @@ function OutletCard({ data }: { data: OutletSnapshot }) {
    COMPACT GOOD OUTLET — inline row
    ================================================================== */
 function GoodOutletRow({ data }: { data: OutletSnapshot }) {
+  const platform = getPlatform(data.outlet.name)
+  const displayName = cleanOutletName(data.outlet.name)
+
   return (
     <div
       className="data-row cursor-default"
       role="listitem"
-      aria-label={`${data.outlet.name}: semua baik, 28 item`}
+      aria-label={`${displayName}: semua baik, ${TOTAL_MENU_ITEMS} item`}
     >
       <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" aria-hidden="true" />
-      <span className="text-sm font-medium text-slate-800 ml-2 truncate">{data.outlet.name}</span>
-      <span className="ml-auto text-[11px] text-emerald-500 font-mono font-medium">✓ 28/28</span>
+      <span className="text-sm font-medium text-slate-800 ml-2 truncate">{displayName}</span>
+      <span className="ml-2">
+        <PlatformBadge platform={platform} />
+      </span>
+      <span className="ml-auto text-[11px] text-emerald-500 font-mono font-medium">✓ {TOTAL_MENU_ITEMS}/{TOTAL_MENU_ITEMS}</span>
     </div>
   )
 }
@@ -184,10 +218,21 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
     )
   }
 
-  const outletsWithIssues = outlets.filter(o => o.offStock.length > 0 || o.inactiveMenu.length > 0)
-  const outletsAllGood = outlets.filter(o => o.snapshot !== null && o.offStock.length === 0 && o.inactiveMenu.length === 0)
-  const outletsNoData = outlets.filter(o => o.snapshot === null)
-  const totalItems = outlets.filter(o => o.snapshot !== null).length * 28
+  const sortByPlatformAndName = (a: OutletSnapshot, b: OutletSnapshot) => {
+    const pa = getPlatform(a.outlet.name)
+    const pb = getPlatform(b.outlet.name)
+    if (pa !== pb) return pa === 'GoFood' ? -1 : 1
+    return cleanOutletName(a.outlet.name).localeCompare(cleanOutletName(b.outlet.name), 'id-ID')
+  }
+
+  const outletsWithIssues = outlets
+    .filter(o => o.offStock.length > 0 || o.inactiveMenu.length > 0)
+    .sort(sortByPlatformAndName)
+  const outletsAllGood = outlets
+    .filter(o => o.snapshot !== null && o.offStock.length === 0 && o.inactiveMenu.length === 0)
+    .sort(sortByPlatformAndName)
+  const outletsNoData = outlets.filter(o => o.snapshot === null).sort(sortByPlatformAndName)
+  const totalItems = outlets.filter(o => o.snapshot !== null).length * TOTAL_MENU_ITEMS
   const totalOff = outlets.reduce((sum, o) => sum + o.offStock.length, 0)
   const totalInactive = outlets.reduce((sum, o) => sum + o.inactiveMenu.length, 0)
 
@@ -207,7 +252,11 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
             />
             <div className="min-w-0">
               <h1 className="text-[var(--font-size-lg)] font-bold text-slate-900 leading-tight">Enakko Stock Monitor</h1>
-              <div className="flex items-center gap-2 text-[11px] text-slate-500">
+              <div className="mt-1 flex items-center gap-1.5" aria-label="Platform monitor: GoFood dan GrabFood">
+                <img src="/gofood-logo.svg" alt="GoFood" className="h-4 w-auto" />
+                <img src="/grabfood-logo.svg" alt="GrabFood" className="h-4 w-auto" />
+              </div>
+              <div className="mt-1 flex items-center gap-2 text-[11px] text-slate-500">
                 <Calendar className="w-3 h-3" aria-hidden="true" />
                 <time>{formatDate(date)}</time>
                 <span className="text-slate-300" aria-hidden="true">·</span>
@@ -293,12 +342,19 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
               </span>
             </div>
             <div className="card overflow-hidden opacity-60">
-              {outletsNoData.map((o) => (
-                <div key={o.outlet.id} className="data-row" role="listitem" aria-label={o.outlet.name}>
-                  <Store className="w-4 h-4 text-slate-300" aria-hidden="true" />
-                  <span className="text-sm text-slate-400 ml-2">{o.outlet.name}</span>
-                </div>
-              ))}
+              {outletsNoData.map((o) => {
+                const platform = getPlatform(o.outlet.name)
+                const displayName = cleanOutletName(o.outlet.name)
+                return (
+                  <div key={o.outlet.id} className="data-row" role="listitem" aria-label={displayName}>
+                    <Store className="w-4 h-4 text-slate-300" aria-hidden="true" />
+                    <span className="text-sm text-slate-400 ml-2">{displayName}</span>
+                    <span className="ml-2 opacity-60">
+                      <PlatformBadge platform={platform} />
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           </section>
         )}

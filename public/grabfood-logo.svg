@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="32" viewBox="0 0 120 32" role="img" aria-label="GrabFood">
+  <rect x="0" y="0" width="120" height="32" rx="8" fill="#00B14F"/>
+  <path d="M15 20c2.2 0 4-1.8 4-4s-1.8-4-4-4h-2v8h2zm0-6c1.1 0 2 .9 2 2s-.9 2-2 2h-.5v-4H15z" fill="#ffffff"/>
+  <text x="30" y="21" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" fill="#ffffff">GrabFood</text>
+</svg>
